@@ -7,7 +7,7 @@ import {
   MinLength,
 } from 'class-validator';
 
-export class CreateUser {
+export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
   @MinLength(3)
