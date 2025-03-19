@@ -32,6 +32,7 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-argument': 'warn',
       '@typescript-eslint/no-shadow': 'off',
       '@typescript-eslint/consistent-type-definitions': 'off',
+      'prefer-const': 'off',
     },
   },
 );
