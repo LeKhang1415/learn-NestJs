@@ -1,7 +1,13 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { PostType } from './enums/postType.enum';
 import { PostStatus } from './enums/postStatus.enum';
-import { CreatePostMetaOptionDto } from './dtos/create-post-meta-option.dto';
+import { MetaOption } from '../meta-options/meta-option.entity';
 
 @Entity()
 export class Post {
@@ -65,6 +71,9 @@ export class Post {
   publishOn?: Date;
 
   // Work on these in lecture on relationships
-  tags?: string[];
-  metaOptions?: CreatePostMetaOptionDto[];
+  // tags?: string[];
+
+  @OneToOne(() => MetaOption)
+  @JoinColumn({ name: 'metaOption' })
+  metaOptions?: MetaOption;
 }
