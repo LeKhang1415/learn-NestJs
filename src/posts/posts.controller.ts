@@ -1,13 +1,27 @@
-import { Body, Controller, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { PostsService } from './providers/posts.service';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CreateUserDto } from '../users/dtos/create-user.dto';
 import { PatchPostDto } from './dtos/patch-post.dto';
+import { CreatePostDto } from './dtos/create-post.dto';
 
 @Controller('posts')
 @ApiTags('Posts')
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}
+
+  @Get('{/:userId}')
+  public getPosts(@Param('userId') userId: string) {
+    return this.postsService.findAll(userId);
+  }
 
   @ApiOperation({
     summary: 'Creates A Posts',
@@ -17,7 +31,9 @@ export class PostsController {
     description: 'Success',
   })
   @Post('')
-  public async createPost(@Body() createUserDto: CreateUserDto) {}
+  public async createPost(@Body() createPostDto: CreatePostDto) {
+    return this.postsService.createPost(createPostDto);
+  }
 
   @ApiOperation({
     summary: 'Updates and existing blog post in the database.',
@@ -30,5 +46,10 @@ export class PostsController {
   @Patch()
   public updatePost(@Body() patchPostsDto: PatchPostDto) {
     console.log(patchPostsDto);
+  }
+
+  @Delete('{/:postId}')
+  public async deletePost(@Param('postId') postId: string) {
+    return this.postsService.deletePost(postId);
   }
 }
