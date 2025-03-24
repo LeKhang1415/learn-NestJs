@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { UsersService } from '../../users/providers/users.service';
 import { CreatePostDto } from '../dtos/create-post.dto';
 import { MetaOption } from '../../meta-options/meta-option.entity';
+import { TagsService } from '../../tags/providers/tags.service';
 
 @Injectable()
 export class PostsService {
@@ -13,6 +14,11 @@ export class PostsService {
      * Injecting Users Service
      */
     private readonly usersService: UsersService,
+
+    /*
+     * Injecting Tags Service
+     */
+    private readonly tagsService: TagsService,
 
     /**
      * Injecting postsRepository
@@ -25,8 +31,20 @@ export class PostsService {
   ) {}
 
   public async createPost(createPostDto: CreatePostDto) {
+    let author = await this.usersService.findOneById(createPostDto.authorId);
+
+    if (!author) throw new Error('User not found');
+
+    let tags = await this.tagsService.findMultipleTags(
+      createPostDto.tags ?? [],
+    );
+
     // Tạo bài viết
-    let post = this.postsRepository.create(createPostDto);
+    let post = this.postsRepository.create({
+      ...createPostDto,
+      author: author,
+      tags: tags,
+    });
 
     return await this.postsRepository.save(post);
   }
@@ -36,6 +54,7 @@ export class PostsService {
     return await this.postsRepository.find({
       relations: {
         metaOptions: true,
+        author: true,
       },
     });
   }

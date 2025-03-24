@@ -96,13 +96,12 @@ export class CreatePostDto {
   publishOn?: Date;
 
   @ApiPropertyOptional({
-    description: 'Array of tags passed as string values',
-    example: ['nestjs', 'typescript'],
+    description: 'Array of tagsId passed as string values',
+    example: ['uuid1', 'uuid2'],
   })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  @MinLength(3, { each: true })
   tags?: string[];
 
   @ApiPropertyOptional({
@@ -119,4 +118,13 @@ export class CreatePostDto {
   @ValidateNested({ each: true })
   @Type(() => CreatePostMetaOptionDto)
   metaOptions?: CreatePostMetaOptionDto | null;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    type: 'string',
+    required: true,
+    example: 'uasnf_kfjr',
+  })
+  authorId: string;
 }
