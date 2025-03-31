@@ -22,7 +22,7 @@ import { MetaOptionsModule } from './meta-options/meta-options.module';
         synchronize: true,
         port: 5432,
         username: 'postgres',
-        password: 'khanglehs2004',
+        password: '',
         database: 'nestjs-blog',
       }),
     }),

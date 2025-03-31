@@ -6,6 +6,7 @@ import { UsersService } from '../../users/providers/users.service';
 import { CreatePostDto } from '../dtos/create-post.dto';
 import { MetaOption } from '../../meta-options/meta-option.entity';
 import { TagsService } from '../../tags/providers/tags.service';
+import { PatchPostDto } from '../dtos/patch-post.dto';
 
 @Injectable()
 export class PostsService {
@@ -55,9 +56,33 @@ export class PostsService {
       relations: {
         metaOptions: true,
         author: true,
+        tags: true,
       },
     });
   }
+
+  public async updatePost(patchPostDto: PatchPostDto) {
+    let tags = await this.tagsService.findMultipleTags(patchPostDto.tags ?? []);
+
+    let post = await this.postsRepository.findOneBy({ id: patchPostDto.id });
+
+    if (!post) throw new Error('Post not found');
+
+    post.title = patchPostDto.title ?? post.title;
+    post.content = patchPostDto.content ?? post.content;
+    post.status = patchPostDto.status ?? post.status;
+    post.postType = patchPostDto.postType ?? post.postType;
+    post.slug = patchPostDto.slug ?? post.slug;
+    post.featuredImageUrl =
+      patchPostDto.featuredImageUrl ?? post.featuredImageUrl;
+    post.schema = patchPostDto.schema ?? post.schema;
+    post.publishOn = patchPostDto.publishOn ?? post.publishOn;
+
+    post.tags = tags;
+
+    return await this.postsRepository.save(post);
+  }
+
   public async deletePost(postId: string) {
     await this.postsRepository.delete({ id: postId });
 
