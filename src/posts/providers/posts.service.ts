@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  RequestTimeoutException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Post } from '../post.entity';
 import { Repository } from 'typeorm';
@@ -7,6 +11,7 @@ import { CreatePostDto } from '../dtos/create-post.dto';
 import { MetaOption } from '../../meta-options/meta-option.entity';
 import { TagsService } from '../../tags/providers/tags.service';
 import { PatchPostDto } from '../dtos/patch-post.dto';
+import { Tag } from '../../tags/tag.entity';
 
 @Injectable()
 export class PostsService {
@@ -62,12 +67,51 @@ export class PostsService {
   }
 
   public async updatePost(patchPostDto: PatchPostDto) {
-    let tags = await this.tagsService.findMultipleTags(patchPostDto.tags ?? []);
+    let tags: Tag[] | null;
+    let post: Post | null;
 
-    let post = await this.postsRepository.findOneBy({ id: patchPostDto.id });
+    // 🔎 Tìm các tag theo ID
+    try {
+      tags = await this.tagsService.findMultipleTags(patchPostDto.tags ?? []);
+    } catch (error) {
+      throw new RequestTimeoutException(
+        'Không thể xử lý yêu cầu của bạn ngay lúc này, vui lòng thử lại sau',
+        {
+          description: 'Lỗi kết nối đến cơ sở dữ liệu',
+        },
+      );
+    }
 
-    if (!post) throw new Error('Post not found');
+    /**
+     * ❌ Nếu không tìm thấy đủ tag
+     * → Số lượng tag tìm được phải bằng với số lượng ID truyền vào
+     */
+    if (!tags || tags.length !== patchPostDto.tags?.length) {
+      throw new BadRequestException(
+        'Vui lòng kiểm tra lại các tag ID, có thể một số ID không tồn tại',
+      );
+    }
 
+    // 🔍 Tìm bài viết cần cập nhật
+    try {
+      post = await this.postsRepository.findOneBy({
+        id: patchPostDto.id,
+      });
+    } catch (error) {
+      throw new RequestTimeoutException(
+        'Không thể xử lý yêu cầu của bạn ngay lúc này, vui lòng thử lại sau',
+        {
+          description: 'Lỗi kết nối đến cơ sở dữ liệu',
+        },
+      );
+    }
+
+    // ❌ Nếu không tìm thấy bài viết
+    if (!post) {
+      throw new BadRequestException('ID bài viết không tồn tại');
+    }
+
+    // ✏️ Cập nhật các trường của bài viết nếu có dữ liệu mới
     post.title = patchPostDto.title ?? post.title;
     post.content = patchPostDto.content ?? post.content;
     post.status = patchPostDto.status ?? post.status;
@@ -75,12 +119,24 @@ export class PostsService {
     post.slug = patchPostDto.slug ?? post.slug;
     post.featuredImageUrl =
       patchPostDto.featuredImageUrl ?? post.featuredImageUrl;
-    post.schema = patchPostDto.schema ?? post.schema;
     post.publishOn = patchPostDto.publishOn ?? post.publishOn;
 
+    // 🔗 Gán lại danh sách tag mới
     post.tags = tags;
 
-    return await this.postsRepository.save(post);
+    // 💾 Lưu bài viết và trả về kết quả
+    try {
+      await this.postsRepository.save(post);
+    } catch (error) {
+      throw new RequestTimeoutException(
+        'Không thể xử lý yêu cầu của bạn ngay lúc này, vui lòng thử lại sau',
+        {
+          description: 'Lỗi kết nối đến cơ sở dữ liệu',
+        },
+      );
+    }
+
+    return post;
   }
 
   public async deletePost(postId: string) {
