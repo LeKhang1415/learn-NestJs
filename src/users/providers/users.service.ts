@@ -7,10 +7,12 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../user.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { CreateUserDto } from '../dtos/create-user.dto';
 import { ConfigType } from '@nestjs/config';
 import profileConfig from '../config/profile.config';
+import { UsersCreateManyProvider } from './users-create-many-provider';
+import { CreateManyUsersDto } from '../dtos/create-many-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -21,6 +23,13 @@ export class UsersService {
     // Injecting ConfigService
     @Inject(profileConfig.KEY)
     private readonly profileConfiguration: ConfigType<typeof profileConfig>,
+
+    private readonly dataSource: DataSource,
+
+    /**
+     * Inject UsersCreateMany provider
+     */
+    private readonly usersCreateManyProvider: UsersCreateManyProvider,
   ) {}
 
   public async createUser(createUserDto: CreateUserDto) {
@@ -106,5 +115,11 @@ export class UsersService {
 
     // Nếu có, trả về thông tin người dùng
     return existingUser;
+  }
+
+  public async createManyUsers(createManyUsersDto: CreateManyUsersDto) {
+    return await this.usersCreateManyProvider.createManyUsers(
+      createManyUsersDto,
+    );
   }
 }
