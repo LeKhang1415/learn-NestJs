@@ -12,6 +12,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
  * */
 import { UsersModule } from './users/users.module';
 import { PaginationModule } from './common/pagination/pagination.module';
+import { AuthModule } from './auth/auth.module';
 import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
 import environmentValidation from './config/environment.validation';
@@ -50,6 +51,7 @@ console.log(ENV);
     TagsModule,
     MetaOptionsModule,
     PaginationModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
