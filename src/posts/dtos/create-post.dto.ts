@@ -102,7 +102,7 @@ export class CreatePostDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  tags?: string[] | null;
+  tags?: string[] | undefined;
 
   @ApiPropertyOptional({
     type: 'object',
@@ -117,14 +117,5 @@ export class CreatePostDto {
   @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => CreatePostMetaOptionDto)
-  metaOptions?: CreatePostMetaOptionDto | null;
-
-  @IsString()
-  @IsNotEmpty()
-  @ApiProperty({
-    type: 'string',
-    required: true,
-    example: 'uasnf_kfjr',
-  })
-  authorId: string;
+  metaOptions?: CreatePostMetaOptionDto | undefined;
 }

@@ -32,6 +32,7 @@ export class AccessTokenGuard implements CanActivate {
     }
 
     try {
+      // Payload duoc truyen vao body de co the su dung trong controller neu can
       request[REQUEST_USER_KEY] = this.jwtService.verify<JwtPayload>(
         token,
         this.jwtConfiguration,

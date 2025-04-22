@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   RequestTimeoutException,
 } from '@nestjs/common';
@@ -15,6 +16,8 @@ import { Tag } from '../../tags/tag.entity';
 import { GetPostDto } from '../dtos/get-post.dto';
 import { PaginationProvider } from '../../common/pagination/providers/pagination.provider';
 import { Paginated } from '../../common/pagination/interfaces/paginated.interface';
+import { ActiveUserInterface } from '../../auth/interfaces/active-user.interface';
+import { User } from '../../users/user.entity';
 
 @Injectable()
 export class PostsService {
@@ -41,23 +44,51 @@ export class PostsService {
     private readonly metaOptionRepository: Repository<MetaOption>,
   ) {}
 
-  public async createPost(createPostDto: CreatePostDto) {
-    let author = await this.usersService.findOneById(createPostDto.authorId);
+  public async createPost(
+    createPostsDto: CreatePostDto,
+    user: ActiveUserInterface,
+  ) {
+    // Khai báo biến tác giả và thẻ (tags)
+    let author: User | undefined = undefined;
+    let tags: Tag[] | undefined;
 
-    if (!author) throw new Error('User not found');
+    try {
+      // Tìm người dùng (tác giả) từ CSDL theo userId
+      author = await this.usersService.findOneById(user.sub);
 
-    let tags = await this.tagsService.findMultipleTags(
-      createPostDto.tags ?? [],
-    );
+      // Nếu người dùng gửi lên tags, tiến hành tìm các tag tương ứng
+      tags = createPostsDto.tags
+        ? await this.tagsService.findMultipleTags(createPostsDto.tags)
+        : [];
+    } catch (error) {
+      // Nếu xảy ra lỗi trong quá trình tìm tác giả hoặc tags, ném ra lỗi xung đột
+      throw new ConflictException('Lỗi khi xử lý dữ liệu tác giả hoặc thẻ.');
+    }
 
-    // Tạo bài viết
-    let post = this.postsRepository.create({
-      ...createPostDto,
+    // Kiểm tra xem tất cả tagId gửi lên có tồn tại không
+    if (createPostsDto?.tags?.length !== tags.length) {
+      throw new BadRequestException(
+        'Vui lòng kiểm tra lại danh sách tag bạn đã gửi.',
+      );
+    }
+
+    // Tạo bài viết mới
+    const post = this.postsRepository.create({
+      ...createPostsDto,
       author: author,
       tags: tags,
     });
 
-    return await this.postsRepository.save(post);
+    try {
+      // Lưu bài viết vào CSDL và trả kết quả
+      return await this.postsRepository.save(post);
+    } catch (error) {
+      // Nếu slug trùng lặp hoặc có lỗi khi lưu, ném ra lỗi xung đột
+      throw new ConflictException(
+        error,
+        'Lỗi khi lưu bài viết. Đảm bảo rằng slug không bị trùng.',
+      );
+    }
   }
 
   public async findAll(
@@ -77,7 +108,7 @@ export class PostsService {
   }
 
   public async updatePost(patchPostDto: PatchPostDto) {
-    let tags: Tag[] | null;
+    let tags: Tag[] | undefined;
     let post: Post | null;
 
     // 🔎 Tìm các tag theo ID
