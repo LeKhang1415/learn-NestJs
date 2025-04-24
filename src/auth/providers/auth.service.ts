@@ -8,10 +8,9 @@ import {
 import { SignInDto } from '../dtos/signin.dto';
 import { UsersService } from '../../users/providers/users.service';
 import { HashingProvider } from './hashing.provider';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigType } from '@nestjs/config';
-import jwtConfig from '../config/jwt.config';
-import { ActiveUserInterface } from '../interfaces/active-user.interface';
+import { GenerateTokenProvider } from './generate-token.provider';
+import { RefreshTokenProvider } from './refresh-token.provider';
+import { RefreshTokenDto } from '../dtos/refresh-token.dto';
 
 @Injectable()
 export class AuthService {
@@ -22,12 +21,9 @@ export class AuthService {
     // Inject HashingProvider
     private readonly hashingProvider: HashingProvider,
 
-    // Inject JWTService
-    private readonly jwtService: JwtService,
+    private readonly generateTokenProvider: GenerateTokenProvider,
 
-    // Inject JWTConfig
-    @Inject(jwtConfig.KEY)
-    private readonly jwtConfiguration: ConfigType<typeof jwtConfig>,
+    private readonly refreshTokenProvider: RefreshTokenProvider,
   ) {}
 
   public async signIn(signInDto: SignInDto) {
@@ -58,23 +54,10 @@ export class AuthService {
       );
     }
 
-    // Generate access token
-    const accessToken = await this.jwtService.signAsync(
-      {
-        sub: existingUser.id,
-        email: existingUser.email,
-      } as ActiveUserInterface,
-      {
-        audience: this.jwtConfiguration.audience,
-        issuer: this.jwtConfiguration.issuer,
-        secret: this.jwtConfiguration.secret,
-        expiresIn: this.jwtConfiguration.accessTokenTtl,
-      },
-    );
+    return this.generateTokenProvider.generateToken(existingUser);
+  }
 
-    // Return Access token
-    return {
-      accessToken,
-    };
+  public async refreshToken(refreshTokenDto: RefreshTokenDto) {
+    return this.refreshTokenProvider.refreshToken(refreshTokenDto);
   }
 }
