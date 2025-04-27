@@ -15,6 +15,9 @@ import profileConfig from '../config/profile.config';
 import { UsersCreateManyProvider } from './users-create-many-provider';
 import { CreateManyUsersDto } from '../dtos/create-many-user.dto';
 import { HashingProvider } from '../../auth/providers/hashing.provider';
+import { FindOneByGoogleIdProvider } from './find-one-by-google-id.provider';
+import { CreateGoogleUserProvider } from './create-google-user.provider';
+import { GoogleUser } from '../interfaces/google-user.interfaces';
 
 @Injectable()
 export class UsersService {
@@ -38,6 +41,10 @@ export class UsersService {
      * Inject UsersCreateMany provider
      */
     private readonly usersCreateManyProvider: UsersCreateManyProvider,
+
+    private readonly findOneByGoogleIdProvider: FindOneByGoogleIdProvider,
+
+    private readonly createGoogleUserProvider: CreateGoogleUserProvider,
   ) {}
 
   public async createUser(createUserDto: CreateUserDto) {
@@ -159,5 +166,13 @@ export class UsersService {
     return await this.usersCreateManyProvider.createManyUsers(
       createManyUsersDto,
     );
+  }
+
+  public async findOneByGoogleId(googleId: string) {
+    return this.findOneByGoogleIdProvider.findOneByGoogleId(googleId);
+  }
+
+  public async createGoogleUser(googleUser: GoogleUser) {
+    return this.createGoogleUserProvider.createGoogleUser(googleUser);
   }
 }
