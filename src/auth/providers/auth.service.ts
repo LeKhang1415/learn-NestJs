@@ -30,14 +30,13 @@ export class AuthService {
     const existingUser = await this.usersService.findOneByEmail(
       signInDto.email,
     );
-
     let isEqual: boolean = false;
 
     try {
       // So sánh mật khẩu người dùng nhập vào và mật khẩu đã lưu trong cơ sở dữ liệu
       isEqual = await this.hashingProvider.comparePassword(
         signInDto.password,
-        existingUser.password,
+        existingUser.password!,
       );
     } catch (error) {
       console.error(error);
