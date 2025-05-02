@@ -18,6 +18,7 @@ import { HashingProvider } from '../../auth/providers/hashing.provider';
 import { FindOneByGoogleIdProvider } from './find-one-by-google-id.provider';
 import { CreateGoogleUserProvider } from './create-google-user.provider';
 import { GoogleUser } from '../interfaces/google-user.interfaces';
+import { MailService } from '../../mail/providers/mail.service';
 
 @Injectable()
 export class UsersService {
@@ -36,6 +37,9 @@ export class UsersService {
      */
     @Inject(forwardRef(() => HashingProvider))
     private readonly hashingProvider: HashingProvider,
+
+    @Inject(forwardRef(() => MailService))
+    private readonly mailService: MailService,
 
     /**
      * Inject UsersCreateMany provider
@@ -86,6 +90,12 @@ export class UsersService {
           description: 'Lỗi kết nối đến cơ sở dữ liệu',
         },
       );
+    }
+
+    try {
+      await this.mailService.sendWelcomeEmail(newUser);
+    } catch (error) {
+      throw new RequestTimeoutException(error);
     }
     // Trả về thông tin người dùng đã được tạo thành công
     return newUser;
